@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:crypto_app/services/crypto_services/crypto_service.dart';
 import 'package:crypto_app/modules/crypto/crypto_model.dart';
 import 'package:crypto_app/constants/decorations/text_style.dart';
 import 'package:crypto_app/constants/decorations/input_box.dart';
+import 'package:crypto_app/modules/crypto/crypto_view_model.dart';
 
 class MenuView extends StatefulWidget {
   const MenuView({Key? key}) : super(key: key);
@@ -15,7 +15,7 @@ class _MenuViewState extends State<MenuView> {
   final TextEditingController _primaryCur = TextEditingController(); // Text editing controller for first TextField
   final TextEditingController _secondCur = TextEditingController(); // Text editing controller for second TextField
   final TextEditingController _amount = TextEditingController(); // Text editing controller for third TextField
-  CryptoModel myData = CryptoModel(primaryCurrency: '', secondaryCurrency: '', amount: 0, value: 0);
+  final CryptoViewModel _viewModel = CryptoViewModel();
   String _curConvert = '';
 
   @override
@@ -71,9 +71,9 @@ class _MenuViewState extends State<MenuView> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (myData.primaryCurrency.isNotEmpty)
+                    if (_viewModel.myData.status != "error")
                       Text(
-                        '${myData.value} $_curConvert',
+                        '${_viewModel.myData.value} $_curConvert',
                         style: kHighLightBodyTextStyle,
                       ),
                   ],
@@ -85,15 +85,19 @@ class _MenuViewState extends State<MenuView> {
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.check),
           onPressed: () async {
-            // Call the fetchCrypto function and wait for the result
-            myData = await fetchCrypto(
-              primaryCur: _primaryCur.text,
-              secondCur: _secondCur.text,
-              amount: int.parse(_amount.text),
-            );
-            setState(() {
-              _curConvert = _secondCur.text.toUpperCase();
-            });
+            _viewModel.myData.primaryCurrency = _primaryCur.text;
+            _viewModel.myData.secondaryCurrency = _secondCur.text;
+            _viewModel.myData.amount = double.parse(_amount.text);
+            bool isSuccess = await _viewModel.onUserTabConvert(cryptoData: _viewModel.myData);
+            if(isSuccess){
+              setState(() {
+                _curConvert = _secondCur.text.toUpperCase();
+              });
+            }else{
+              setState(() {
+                _viewModel.myData = CryptoModel(status: "error", primaryCurrency: '', secondaryCurrency: '', amount: 0, value: 0);
+              });
+            }
           },
         ),
       ),
