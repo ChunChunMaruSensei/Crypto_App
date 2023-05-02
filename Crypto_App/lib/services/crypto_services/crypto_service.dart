@@ -18,6 +18,7 @@ class CryptoService implements CryptoServiceInterface {
       cryptoData.status = jsonData['status'];
       return cryptoData;
     }
+    cryptoData.status = "error";
     throw Exception();
   }
 }

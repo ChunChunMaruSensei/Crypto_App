@@ -4,13 +4,13 @@ import 'package:crypto_app/services/crypto_services/crypto_service_interface.dar
 
 
 class CryptoViewModel {
-  CryptoModel myData = CryptoModel(status: "error", primaryCurrency: '', secondaryCurrency: '', amount: 0, value: 0);
+  CryptoModel? myData;
   CryptoServiceInterface service = CryptoService();
-  Future<bool> onUserTabConvert({required CryptoModel cryptoData}) async{
+  Future<bool> onUserTabConvert() async{
     try{
-      myData = await service.fetchItemByCurrency(cryptoData: cryptoData);
+      await service.fetchItemByCurrency(cryptoData: myData!);
       return true;
-    }catch(_){
+    } catch(e){
       return false;
     }
   }

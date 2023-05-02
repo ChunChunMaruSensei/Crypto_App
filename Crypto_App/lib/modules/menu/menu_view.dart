@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:crypto_app/modules/crypto/crypto_model.dart';
 import 'package:crypto_app/constants/decorations/text_style.dart';
 import 'package:crypto_app/constants/decorations/input_box.dart';
 import 'package:crypto_app/modules/crypto/crypto_view_model.dart';
+import 'package:crypto_app/modules/crypto/crypto_model.dart';
 
 class MenuView extends StatefulWidget {
   const MenuView({Key? key}) : super(key: key);
@@ -16,7 +16,7 @@ class _MenuViewState extends State<MenuView> {
   final TextEditingController _secondCur = TextEditingController(); // Text editing controller for second TextField
   final TextEditingController _amount = TextEditingController(); // Text editing controller for third TextField
   final CryptoViewModel _viewModel = CryptoViewModel();
-  String _curConvert = '';
+
 
   @override
   void dispose() {
@@ -26,6 +26,7 @@ class _MenuViewState extends State<MenuView> {
     _amount.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -68,15 +69,26 @@ class _MenuViewState extends State<MenuView> {
               ),
               const SizedBox(height: 16.0),
               Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_viewModel.myData.status != "error")
-                      Text(
-                        '${_viewModel.myData.value} $_curConvert',
-                        style: kHighLightBodyTextStyle,
-                      ),
-                  ],
+                child: FutureBuilder(
+                  future: _viewModel.onUserTabConvert(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasData) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if(_viewModel.myData?.status == "success")
+                            Text(
+                              '${_viewModel.myData?.value} ${_viewModel.myData?.secondaryCurrency}',
+                              style: kHighLightBodyTextStyle,
+                            ),
+                        ],
+                      );
+                    } else {
+                      return const Text('Error');
+                    }
+                  },
                 ),
               ),
             ],
@@ -85,19 +97,14 @@ class _MenuViewState extends State<MenuView> {
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.check),
           onPressed: () async {
-            _viewModel.myData.primaryCurrency = _primaryCur.text;
-            _viewModel.myData.secondaryCurrency = _secondCur.text;
-            _viewModel.myData.amount = double.parse(_amount.text);
-            bool isSuccess = await _viewModel.onUserTabConvert(cryptoData: _viewModel.myData);
-            if(isSuccess){
-              setState(() {
-                _curConvert = _secondCur.text.toUpperCase();
-              });
-            }else{
-              setState(() {
-                _viewModel.myData = CryptoModel(status: "error", primaryCurrency: '', secondaryCurrency: '', amount: 0, value: 0);
-              });
-            }
+            _viewModel.myData = CryptoModel(
+              status: 'loading',
+              primaryCurrency: _primaryCur.text,
+              secondaryCurrency: _secondCur.text,
+              amount: double.parse(_amount.text),
+              value: 0,
+            );
+            setState(() {});
           },
         ),
       ),
